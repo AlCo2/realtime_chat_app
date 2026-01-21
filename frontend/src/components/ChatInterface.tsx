@@ -5,36 +5,16 @@ import ChatHeader from './ChatHeader'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
 import './ChatInterface.css'
+import axios from 'axios'
 
 interface ChatInterfaceProps {
   userName: string
 }
 
-const defaultMessages: Message[] = [
-  {
-    id: '1',
-    text: 'Welcome to the group! 👋',
-    sender: 'System',
-    timestamp: new Date(Date.now() - 3600000),
-    isOwn: false,
-  },
-  {
-    id: '2',
-    text: 'Hey everyone! How are you doing?',
-    sender: 'Alice',
-    timestamp: new Date(Date.now() - 3500000),
-    isOwn: false,
-  },
-  {
-    id: '3',
-    text: 'I\'m doing great, thanks!',
-    sender: 'Bob',
-    timestamp: new Date(Date.now() - 3400000),
-    isOwn: false,
-  },
-]
+const defaultMessages: Message[] = []
 
 export default function ChatInterface({ userName }: ChatInterfaceProps) {
+  const [loading, setLoading] = useState(true)
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
   const location = useLocation()
@@ -43,22 +23,28 @@ export default function ChatInterface({ userName }: ChatInterfaceProps) {
   const [groupName, setGroupName] = useState(`Group ${groupId}`)
 
   useEffect(() => {
+    setLoading(true)
     if (location.state?.groupName) {
       setGroupName(location.state.groupName)
     }
 
-    // Add welcome/join message
-    const welcomeMessage: Message = {
-      id: Date.now().toString(),
-      text: location.state?.isNewGroup 
-        ? `${userName} created this group`
-        : `${userName} joined the group`,
-      sender: 'System',
-      timestamp: new Date(),
-      isOwn: false,
-    }
-    setMessages(prev => [...prev, welcomeMessage])
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    axios.get(`http://localhost:8080/chat?chat_id=${groupId}`).then((response) => {
+      console.log(response.data)
+    }).catch(() => {
+      console.error("Error: failed to load chat")
+      navigate("/");
+    });
+    // const welcomeMessage: Message = {
+    //   id: Date.now().toString(),
+    //   text: location.state?.isNewGroup 
+    //     ? `${userName} created this group`
+    //     : `${userName} joined the group`,
+    //   sender: 'System',
+    //   timestamp: new Date(),
+    //   isOwn: false,
+    // }
+    // setMessages(prev => [...prev, welcomeMessage])
   }, [])
 
   const handleSend = () => {
@@ -91,12 +77,13 @@ export default function ChatInterface({ userName }: ChatInterfaceProps) {
         groupId={groupId}
         onLeave={handleLeaveGroup}
       />
-      <MessageList messages={messages} />
+     {loading ? <div>Loading...</div>:<MessageList messages={messages} />}
       <MessageInput
         value={inputValue}
         onChange={setInputValue}
         onSend={handleSend}
         placeholder={`Message ${groupName}...`}
+        disabled={loading}
       />
     </div>
   )

@@ -5,10 +5,11 @@ interface MessageInputProps {
   value: string
   onChange: (value: string) => void
   onSend: () => void
-  placeholder: string
+  placeholder: string,
+  disabled: boolean
 }
 
-export default function MessageInput({ value, onChange, onSend, placeholder }: MessageInputProps) {
+export default function MessageInput({ value, onChange, onSend, placeholder, disabled }: MessageInputProps) {
   const inputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function MessageInput({ value, onChange, onSend, placeholder }: M
           type="text"
           className="message-input"
           placeholder={placeholder}
+          disabled={disabled}
           value={value}
           onChange={(e) => onChange(e.target.value)}
           onKeyPress={handleKeyPress}
@@ -37,7 +39,7 @@ export default function MessageInput({ value, onChange, onSend, placeholder }: M
         <button
           className="send-button"
           onClick={onSend}
-          disabled={!value.trim()}
+          disabled={!value.trim() || disabled}
           aria-label="Send message"
         >
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
