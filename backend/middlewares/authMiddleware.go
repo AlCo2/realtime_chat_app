@@ -7,7 +7,7 @@ func AuthMiddleware() gin.HandlerFunc {
 		_, err := c.Cookie("id")
 
 		if err != nil {
-			c.AbortWithStatusJSON(801, gin.H{"message": "Unauthorized"})
+			c.AbortWithStatusJSON(401, "You don't have permission to perform this action")
 			return
 		}
 

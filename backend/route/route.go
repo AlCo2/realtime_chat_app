@@ -2,6 +2,7 @@ package route
 
 import (
 	"main/handlers"
+	"main/middlewares"
 
 	"github.com/gin-gonic/gin"
 )
@@ -12,7 +13,7 @@ func CreateRoutes(router *gin.Engine) {
 
 	{
 		chatRoute := router.Group("/chat")
-		//chatRoute.Use()
+		chatRoute.Use(middlewares.AuthMiddleware())
 		chatRoute.GET("", handlers.GetChat)
 		chatRoute.POST("", handlers.CreateChat)
 	}
