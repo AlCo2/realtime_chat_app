@@ -4,10 +4,19 @@ import (
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"github.com/goombaio/namegenerator"
 )
 
 func Authenticate(c *gin.Context) {
+
+	_, err := c.Cookie("id")
+
+	if err != nil {
+		id := uuid.New().String()
+		c.SetCookie("id", id, 3600, "/", "", false, false)
+	}
+
 	username, err := c.Cookie("username")
 	if err != nil {
 		seed := time.Now().UTC().UnixNano()
@@ -17,10 +26,7 @@ func Authenticate(c *gin.Context) {
 
 		c.SetCookie("username", name, 3600, "/", "", false, false)
 
-		c.JSON(200, gin.H{
-			"username": name,
-		})
-		return
+		username = name
 	}
 
 	c.JSON(200, gin.H{
