@@ -1,11 +1,16 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import LandingPage from './components/LandingPage'
 import ChatInterface from './components/ChatInterface'
+import axios from 'axios';
 import './App.css'
 
 function App() {
-  const [userName, setUserName] = useState('')
+  const [username, setUsername] = useState('')
+
+  useEffect(()=> {
+    axios.post("http://localhost:8080/session", {}, {withCredentials:true}).then((response) =>setUsername(response.data.username));
+  }, []);
 
   return (
     <BrowserRouter>
@@ -14,16 +19,16 @@ function App() {
           path="/"
           element={
             <LandingPage
-              userName={userName}
-              setUserName={setUserName}
+              userName={username}
+              setUserName={setUsername}
             />
           }
         />
         <Route
           path="/chat/:groupId"
           element={
-            userName ? (
-              <ChatInterface userName={userName} />
+            username ? (
+              <ChatInterface userName={username} />
             ) : (
               <Navigate to="/" replace />
             )
