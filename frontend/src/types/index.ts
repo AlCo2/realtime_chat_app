@@ -1,9 +1,9 @@
 export interface Message {
   id: string
   text: string
-  sender: string
+  sender_id: string
+  sender_username: string
   timestamp: Date
-  isOwn: boolean
 }
 
 export interface ChatState {

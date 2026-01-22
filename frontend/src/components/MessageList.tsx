@@ -22,7 +22,7 @@ export default function MessageList({ messages }: MessageListProps) {
     <div className="messages-container">
       <div className="messages-list">
         {messages.map((message, index) => {
-          const showAvatar = index === 0 || messages[index - 1].sender !== message.sender
+          const showAvatar = index === 0 || messages[index - 1].sender_username !== message.sender_username
           const showTime = index === messages.length - 1 || 
             new Date(message.timestamp).getTime() - new Date(messages[index + 1].timestamp).getTime() > 300000
 

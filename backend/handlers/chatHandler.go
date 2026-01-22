@@ -13,7 +13,7 @@ import (
 )
 
 type GetChatRequest struct {
-	ChatId string `json:"chat_id" binding:"required"`
+	ChatId string `form:"chat_id" binding:"required"`
 }
 
 func analyseChatFile(filePath string) (*models.Chat, error) {
@@ -28,7 +28,8 @@ func analyseChatFile(filePath string) (*models.Chat, error) {
 	decoder := json.NewDecoder(file)
 
 	if err := decoder.Decode(&chat); err != nil {
-		panic(err)
+		fmt.Print(err)
+		return nil, errors.New("failed to load chat")
 	}
 
 	return &chat, nil
@@ -37,7 +38,7 @@ func analyseChatFile(filePath string) (*models.Chat, error) {
 func GetChat(c *gin.Context) {
 	var request GetChatRequest
 
-	if err := c.ShouldBindUri(&request); err != nil {
+	if err := c.ShouldBindQuery(&request); err != nil {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}

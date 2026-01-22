@@ -1,6 +1,7 @@
 import type { Message } from '../types'
 import { formatTime, getAvatarColor } from '../utils'
 import './Message.css'
+import Cookies from 'js-cookie';
 
 interface MessageProps {
   message: Message
@@ -9,21 +10,24 @@ interface MessageProps {
 }
 
 export default function MessageUI({ message, showAvatar, showTime }: MessageProps) {
+  const currentUser = Cookies.get("id")
+  console.log(currentUser)
+  const isOwn = currentUser === message.sender_id
   return (
     <div
-      className={`message-wrapper ${message.isOwn ? 'own' : ''} ${message.sender === 'System' ? 'system' : ''}`}
+      className={`message-wrapper ${isOwn? 'own' : ''} ${message.sender_id === '1' ? 'system' : ''}`}
     >
-      {!message.isOwn && showAvatar && message.sender !== 'System' && (
+      {!(currentUser === message.sender_id) && showAvatar && (
         <div 
           className="message-avatar" 
-          style={{ background: getAvatarColor(message.sender) }}
+          style={{ background: getAvatarColor(message.sender_username) }}
         >
-          {message.sender[0]}
+          {message.sender_username[0]}
         </div>
       )}
-      <div className={`message ${message.isOwn ? 'own' : ''} ${message.sender === 'System' ? 'system' : ''}`}>
-        {!message.isOwn && message.sender !== 'System' && (
-          <div className="message-sender">{message.sender}</div>
+      <div className={`message ${isOwn ? 'own' : ''} ${message.sender_id === '1' ? 'system' : ''}`}>
+        {!isOwn && message.sender_id !== '1' && (
+          <div className="message-sender">{message.sender_username}</div>
         )}
         <div className="message-text">{message.text}</div>
         {showTime && (

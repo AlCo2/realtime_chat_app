@@ -29,22 +29,21 @@ export default function ChatInterface({ userName }: ChatInterfaceProps) {
     }
 
 
-    axios.get(`http://localhost:8080/chat?chat_id=${groupId}`).then((response) => {
-      console.log(response.data)
+    axios.get(`http://localhost:8080/chat?chat_id=${groupId}`, {withCredentials:true}).then((response) => {
+      const chat_id: string = response.data.id
+      const messages: Message[] = response.data.messages
+      console.log("ChatId: ", chat_id)
+      messages.forEach((message)=> {
+        setMessages(prev => [...prev, message])
+      })
+      
     }).catch(() => {
       console.error("Error: failed to load chat")
       navigate("/");
+    }).finally(()=> {
+      setLoading(false)
     });
-    // const welcomeMessage: Message = {
-    //   id: Date.now().toString(),
-    //   text: location.state?.isNewGroup 
-    //     ? `${userName} created this group`
-    //     : `${userName} joined the group`,
-    //   sender: 'System',
-    //   timestamp: new Date(),
-    //   isOwn: false,
-    // }
-    // setMessages(prev => [...prev, welcomeMessage])
+   
   }, [])
 
   const handleSend = () => {
@@ -52,9 +51,9 @@ export default function ChatInterface({ userName }: ChatInterfaceProps) {
       const newMessage: Message = {
         id: Date.now().toString(),
         text: inputValue.trim(),
-        sender: userName,
+        sender_username: userName,
         timestamp: new Date(),
-        isOwn: true,
+        sender_id: userName, // todo: update to real id
       }
       setMessages(prev => [...prev, newMessage])
       setInputValue('')
