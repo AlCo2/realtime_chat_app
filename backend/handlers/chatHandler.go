@@ -1,7 +1,10 @@
 package handlers
 
 import (
+	"encoding/json"
+	"errors"
 	"fmt"
+	"main/models"
 	"os"
 	"path/filepath"
 
@@ -13,6 +16,24 @@ type GetChatRequest struct {
 	ChatId string `json:"chat_id" binding:"required"`
 }
 
+func analyseChatFile(filePath string) (*models.Chat, error) {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, errors.New("couldn't open chat file")
+	}
+
+	defer file.Close()
+
+	var chat models.Chat
+	decoder := json.NewDecoder(file)
+
+	if err := decoder.Decode(&chat); err != nil {
+		panic(err)
+	}
+
+	return &chat, nil
+}
+
 func GetChat(c *gin.Context) {
 	var request GetChatRequest
 
@@ -21,7 +42,27 @@ func GetChat(c *gin.Context) {
 		return
 	}
 
-	// to do later...
+	folder := "storage/chats"
+
+	filePath := filepath.Join(folder, fmt.Sprintf("%s.json", request.ChatId))
+
+	_, err := os.Stat(filePath)
+
+	if err != nil {
+		c.JSON(404, "This chat room doesn't exist.")
+		return
+	}
+
+	chat, err := analyseChatFile(filePath)
+	if err != nil {
+		c.JSON(400, "Failed to load chat messages")
+		return
+	}
+
+	c.JSON(200, gin.H{
+		"id":       chat.Id,
+		"messages": chat.Messages,
+	})
 }
 
 func CreateChat(c *gin.Context) {
@@ -43,6 +84,20 @@ func CreateChat(c *gin.Context) {
 	}
 
 	defer chat_file.Close()
+
+	chat := models.Chat{
+		Id:       chat_id,
+		Messages: make([]models.Message, 0),
+	}
+
+	encoder := json.NewEncoder(chat_file)
+
+	encoder.SetIndent("", "  ")
+
+	if err := encoder.Encode(chat); err != nil {
+		c.JSON(500, "Failed to init chat")
+		return
+	}
 
 	c.JSON(200, gin.H{
 		"chat_id": chat_id,

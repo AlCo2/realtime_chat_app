@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { UsergroupAddOutlined } from '@ant-design/icons'
 import { generateGroupId } from '../utils'
 import './LandingPage.css'
+import axios from 'axios'
 
 interface LandingPageProps {
   userName: string
@@ -14,16 +15,22 @@ export default function LandingPage({ userName, setUserName }: LandingPageProps)
   const navigate = useNavigate()
   const userNameInputRef = useRef<HTMLInputElement>(null)
   const groupIdInputRef = useRef<HTMLInputElement>(null)
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     userNameInputRef.current?.focus()
   }, [])
 
   const handleCreateGroup = () => {
-    if (userName.trim()) {
-      const newGroupId = generateGroupId()
-      navigate(`/chat/${newGroupId}`, { state: { groupName: `Group ${newGroupId}`, isNewGroup: true } })
-    }
+    setLoading(true)
+    
+    axios.post("http://localhost:8080/chat", {}, {withCredentials:true}).then((response)=> {
+      const chat_id = response.data.chat_id
+      console.log(chat_id)
+    })
+
+    // navigate(`/chat/${newGroupId}`, { state: { groupName: `Group ${newGroupId}`, isNewGroup: true } })
+  
   }
 
   const handleJoinGroup = () => {
