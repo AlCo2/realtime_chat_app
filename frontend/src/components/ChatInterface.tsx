@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
-import { useParams, useNavigate, useLocation } from 'react-router-dom'
+import { useParams, useNavigate } from 'react-router-dom'
 import type { Message } from '../types'
 import ChatHeader from './ChatHeader'
 import MessageList from './MessageList'
 import MessageInput from './MessageInput'
 import './ChatInterface.css'
 import axios from 'axios'
+import Cookies from 'js-cookie';
 
 interface ChatInterfaceProps {
   userName: string
@@ -15,30 +16,24 @@ const defaultMessages: Message[] = []
 
 export default function ChatInterface({ userName }: ChatInterfaceProps) {
   const [loading, setLoading] = useState(true)
+  const userid = Cookies.get("id");
   const { groupId } = useParams<{ groupId: string }>()
   const navigate = useNavigate()
-  const location = useLocation()
   const [messages, setMessages] = useState<Message[]>(defaultMessages)
   const [inputValue, setInputValue] = useState('')
   const [groupName, setGroupName] = useState(`Group ${groupId}`)
 
   useEffect(() => {
     setLoading(true)
-    if (location.state?.groupName) {
-      setGroupName(location.state.groupName)
-    }
-
 
     axios.get(`http://localhost:8080/chat?chat_id=${groupId}`, {withCredentials:true}).then((response) => {
       const chat_id: string = response.data.id
       const messages: Message[] = response.data.messages
-      console.log("ChatId: ", chat_id)
+      setGroupName(chat_id)
       messages.forEach((message)=> {
         setMessages(prev => [...prev, message])
       })
-      
     }).catch(() => {
-      console.error("Error: failed to load chat")
       navigate("/");
     }).finally(()=> {
       setLoading(false)
@@ -47,14 +42,21 @@ export default function ChatInterface({ userName }: ChatInterfaceProps) {
   }, [])
 
   const handleSend = () => {
+
+    if (!userid) {
+      return;
+    }
+
     if (inputValue.trim()) {
+
       const newMessage: Message = {
         id: Date.now().toString(),
         text: inputValue.trim(),
         sender_username: userName,
         timestamp: new Date(),
-        sender_id: userName, // todo: update to real id
+        sender_id: userid, 
       }
+
       setMessages(prev => [...prev, newMessage])
       setInputValue('')
     }

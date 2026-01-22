@@ -4,9 +4,10 @@ import LandingPage from './components/LandingPage'
 import ChatInterface from './components/ChatInterface'
 import axios from 'axios';
 import './App.css'
+import Cookies from 'js-cookie'
 
 function App() {
-  const [username, setUsername] = useState('')
+  const [username, setUsername] = useState(Cookies.get("username") ?? "")
 
   useEffect(()=> {
     axios.post("http://localhost:8080/session", {}, {withCredentials:true}).then((response) =>setUsername(response.data.username));

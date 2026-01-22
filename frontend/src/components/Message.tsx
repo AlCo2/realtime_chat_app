@@ -11,7 +11,6 @@ interface MessageProps {
 
 export default function MessageUI({ message, showAvatar, showTime }: MessageProps) {
   const currentUser = Cookies.get("id")
-  console.log(currentUser)
   const isOwn = currentUser === message.sender_id
   return (
     <div
