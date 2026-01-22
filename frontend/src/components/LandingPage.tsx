@@ -1,7 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { UsergroupAddOutlined } from '@ant-design/icons'
-import { generateGroupId } from '../utils'
 import './LandingPage.css'
 import axios from 'axios'
 
@@ -27,6 +26,8 @@ export default function LandingPage({ userName, setUserName }: LandingPageProps)
     axios.post("http://localhost:8080/chat", {}, {withCredentials:true}).then((response)=> {
       const chat_id = response.data.chat_id
       console.log(chat_id)
+    }).finally(()=> {
+      setLoading(false)
     })
 
     // navigate(`/chat/${newGroupId}`, { state: { groupName: `Group ${newGroupId}`, isNewGroup: true } })
@@ -88,9 +89,9 @@ export default function LandingPage({ userName, setUserName }: LandingPageProps)
               <button
                 className="action-button primary"
                 onClick={handleCreateGroup}
-                disabled={!userName.trim()}
+                disabled={!userName.trim() || loading}
               >
-                Create Group
+                {loading ? "Loading...": "Create Group"}
               </button>
             </div>
 
