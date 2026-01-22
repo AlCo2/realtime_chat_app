@@ -1,8 +1,11 @@
 package handlers
 
 import (
+	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sync"
 
 	"github.com/gin-gonic/gin"
@@ -99,9 +102,21 @@ func (c *Client) WritePump() {
 }
 
 func ConnectWs(c *gin.Context) {
-	roomID := c.Query("room")
-	if roomID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "room required"})
+	chat_id := c.Query("chat_id")
+
+	if chat_id == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "chat ID required"})
+		return
+	}
+
+	folder := "storage/chats"
+
+	filePath := filepath.Join(folder, fmt.Sprintf("%s.json", chat_id))
+
+	_, err := os.Stat(filePath)
+
+	if err != nil {
+		c.JSON(404, "This chat room doesn't exist.")
 		return
 	}
 
@@ -119,7 +134,7 @@ func ConnectWs(c *gin.Context) {
 		return
 	}
 
-	room := getRoom(roomID)
+	room := getRoom(chat_id)
 
 	client := &Client{
 		ID:   uuid.NewString(),

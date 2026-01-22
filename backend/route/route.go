@@ -20,6 +20,6 @@ func CreateRoutes(router *gin.Engine) {
 
 	router.POST("/session", handlers.Authenticate)
 
-	router.GET("/ws", handlers.ConnectWs)
+	router.GET("/socket.io/*any", handlers.ConnectWs)
 
 }

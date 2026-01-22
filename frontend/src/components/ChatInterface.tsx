@@ -7,6 +7,7 @@ import MessageInput from './MessageInput'
 import './ChatInterface.css'
 import axios from 'axios'
 import Cookies from 'js-cookie';
+import { io } from 'socket.io-client'
 
 interface ChatInterfaceProps {
   userName: string
@@ -17,11 +18,14 @@ const defaultMessages: Message[] = []
 export default function ChatInterface({ userName }: ChatInterfaceProps) {
   const [loading, setLoading] = useState(true)
   const userid = Cookies.get("id");
+
   const { groupId } = useParams<{ groupId: string }>()
+
   const navigate = useNavigate()
   const [messages, setMessages] = useState<Message[]>(defaultMessages)
   const [inputValue, setInputValue] = useState('')
   const [groupName, setGroupName] = useState(`Group ${groupId}`)
+
 
   useEffect(() => {
     setLoading(true)
@@ -38,7 +42,28 @@ export default function ChatInterface({ userName }: ChatInterfaceProps) {
     }).finally(()=> {
       setLoading(false)
     });
-   
+
+    const socket = io(`http://localhost:8080/socket.io?chat_id=${groupId}`, {
+      reconnectionAttempts: 5,
+      transports: ["websocket"]
+    });
+
+    socket.on('connect', () => {
+      console.log("connected to server")
+    });
+
+    socket.on('message', (message) => {
+      setMessages((prev) => [...prev, message]);
+    });
+
+    socket.on('disconnect', () => {
+      console.log('Disconnected from server');
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+    
   }, [])
 
   const handleSend = () => {
