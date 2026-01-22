@@ -1,29 +1,37 @@
 package handlers
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
+	"main/models"
 	"net/http"
 	"os"
 	"path/filepath"
 	"sync"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
 
 type Client struct {
-	ID   string
-	Conn *websocket.Conn
-	Send chan []byte
-	Room *Room
+	ID       string
+	Conn     *websocket.Conn
+	Send     chan []byte
+	Room     *Room
+	username string
 }
 
 type Room struct {
 	ID      string
 	clients map[*Client]bool
 	mu      sync.RWMutex
+}
+
+type IncomingMessage struct {
+	Content string `json:"content"`
+	ChatID  string `json:"chat_id"`
 }
 
 func NewRoom(id string) *Room {
@@ -88,7 +96,26 @@ func (c *Client) ReadPump() {
 		if err != nil {
 			return
 		}
-		c.Room.Broadcast(msg)
+		var incoming IncomingMessage
+		if err := json.Unmarshal(msg, &incoming); err != nil {
+			log.Println("Invalid JSON:", err)
+			continue
+		}
+		t := time.Now()
+		chat := models.Message{
+			Id:             13,
+			Text:           incoming.Content,
+			SenderId:       c.ID,
+			SenderUsername: c.username,
+			Timestamp:      &t,
+		}
+		data, err := json.Marshal(chat)
+		if err != nil {
+			log.Println("Error marshaling message:", err)
+			return
+		}
+
+		c.Room.Broadcast(data)
 	}
 }
 
@@ -103,6 +130,8 @@ func (c *Client) WritePump() {
 
 func ConnectWs(c *gin.Context) {
 	chat_id := c.Query("chat_id")
+	user_id, _ := c.Cookie("id")
+	username, _ := c.Cookie("username")
 
 	if chat_id == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "chat ID required"})
@@ -137,10 +166,11 @@ func ConnectWs(c *gin.Context) {
 	room := getRoom(chat_id)
 
 	client := &Client{
-		ID:   uuid.NewString(),
-		Conn: conn,
-		Send: make(chan []byte, 256),
-		Room: room,
+		ID:       user_id,
+		username: username,
+		Conn:     conn,
+		Send:     make(chan []byte, 256),
+		Room:     room,
 	}
 
 	room.Join(client)
