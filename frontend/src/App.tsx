@@ -10,7 +10,9 @@ function App() {
   const [username, setUsername] = useState(Cookies.get("username") ?? "")
 
   useEffect(()=> {
-    axios.post("http://localhost:8080/session", {}, {withCredentials:true}).then((response) =>setUsername(response.data.username));
+    if (username.trim().length < 1) {
+      axios.post("http://localhost:8080/session", {}, {withCredentials:true}).then((response) =>setUsername(response.data.username));
+    }
   }, []);
 
   return (
