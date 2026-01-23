@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import type { Message } from '../types'
 import ChatHeader from './ChatHeader'
@@ -7,15 +7,10 @@ import MessageInput from './MessageInput'
 import './ChatInterface.css'
 import axios from 'axios'
 import Cookies from 'js-cookie';
-import { io } from 'socket.io-client'
-
-interface ChatInterfaceProps {
-  userName: string
-}
 
 const defaultMessages: Message[] = []
 
-export default function ChatInterface({ userName }: ChatInterfaceProps) {
+export default function ChatInterface() {
   const [loading, setLoading] = useState(true)
   const userid = Cookies.get("id");
 
@@ -25,47 +20,56 @@ export default function ChatInterface({ userName }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>(defaultMessages)
   const [inputValue, setInputValue] = useState('')
   const [groupName, setGroupName] = useState(`Group ${groupId}`)
+  const wsRef = useRef<WebSocket|null>(null)
 
+  const sendMessage = (msg: string) => {
+    if (wsRef.current)
+      wsRef.current.send(JSON.stringify({ content: msg, chat_id: groupId }));
+  };
 
   useEffect(() => {
-    setLoading(true)
+    setLoading(true);
 
-    axios.get(`http://localhost:8080/chat?chat_id=${groupId}`, {withCredentials:true}).then((response) => {
-      const chat_id: string = response.data.id
-      const messages: Message[] = response.data.messages
-      setGroupName(chat_id)
-      messages.forEach((message)=> {
-        setMessages(prev => [...prev, message])
+    axios.get(`http://localhost:8080/chat?chat_id=${groupId}`, { withCredentials: true })
+      .then((response) => {
+        const chat_id: string = response.data.id;
+        const messages: Message[] = response.data.messages;
+
+        setGroupName(chat_id);
+        setMessages(messages);
       })
-    }).catch(() => {
-      navigate("/");
-    }).finally(()=> {
-      setLoading(false)
-    });
+      .catch(() => {
+        navigate("/");
+      })
+      .finally(() => setLoading(false));
 
-    const socket = io(`http://localhost:8080/socket.io?chat_id=${groupId}`, {
-      reconnectionAttempts: 5,
-      transports: ["websocket"]
-    });
 
-    socket.on('connect', () => {
-      console.log("connected to server")
-    });
+    const ws = new WebSocket(`ws://localhost:8080/ws?chat_id=${groupId}`);
+    wsRef.current = ws;
+    ws.onopen = () => {
+      console.log("connected");
+    };
 
-    socket.on('message', (message) => {
-      setMessages((prev) => [...prev, message]);
-    });
+    ws.onmessage = (event) => {
+      const message = JSON.parse(event.data);
+      if (!message.timestamp) {
+        message.timestamp = new Date(0); // fallback
+      } else {
+        message.timestamp = new Date(message.timestamp.replace(/(\.\d{3})\d+/, "$1"));
+      }
 
-    socket.on('disconnect', () => {
-      console.log('Disconnected from server');
-    });
+      setMessages((prev) => [...prev, message]);  
+    };
+
+    ws.onclose = () => {
+      console.log("disconnected");
+    };
 
     return () => {
-      socket.disconnect();
-    };
-    
-  }, [])
+      ws.close()
+    }
 
+}, [groupId]);
   const handleSend = () => {
 
     if (!userid) {
@@ -74,15 +78,16 @@ export default function ChatInterface({ userName }: ChatInterfaceProps) {
 
     if (inputValue.trim()) {
 
-      const newMessage: Message = {
-        id: Date.now().toString(),
-        text: inputValue.trim(),
-        sender_username: userName,
-        timestamp: new Date(),
-        sender_id: userid, 
-      }
+      // const newMessage: Message = {
+      //   id: Date.now().toString(),
+      //   text: inputValue.trim(),
+      //   sender_username: userName,
+      //   timestamp: new Date(),
+      //   sender_id: userid, 
+      // }
 
-      setMessages(prev => [...prev, newMessage])
+      sendMessage(inputValue)
+      // setMessages(prev => [...prev, newMessage])
       setInputValue('')
     }
   }
