@@ -1,2 +1,6 @@
 /* Landing Page styles are in App.css, but keeping this file for future component-specific styles */
 
+.username-section{
+    display: "flex";
+    gap:"2"
+}

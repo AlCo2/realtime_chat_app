@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { UsergroupAddOutlined } from '@ant-design/icons'
 import './LandingPage.css'
 import axios from 'axios'
+import Cookies from 'js-cookie'
 
 interface LandingPageProps {
   userName: string
@@ -15,7 +16,7 @@ export default function LandingPage({ userName, setUserName }: LandingPageProps)
   const userNameInputRef = useRef<HTMLInputElement>(null)
   const groupIdInputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
-
+  const [nameChanged, setNameChanged] = useState(false);
   useEffect(() => {
     userNameInputRef.current?.focus()
   }, [])
@@ -25,7 +26,7 @@ export default function LandingPage({ userName, setUserName }: LandingPageProps)
     
     axios.post("http://localhost:8080/chat", {}, {withCredentials:true}).then((response)=> {
       const chat_id = response.data.chat_id
-      console.log(chat_id)
+      navigate(`/chat/${chat_id}`);
     }).finally(()=> {
       setLoading(false)
     })
@@ -52,7 +53,15 @@ export default function LandingPage({ userName, setUserName }: LandingPageProps)
     }
   }
 
-  
+  const handleNameUpdate = () => {
+    if (!userName.trim())
+      return;
+
+    Cookies.set("username", userName);
+    axios.post("http://localhost:8080/session", {}, {withCredentials:true}).then(()=>{
+      setNameChanged(false);
+    });
+  }
 
   return (
     <div className="landing-page">
@@ -65,16 +74,26 @@ export default function LandingPage({ userName, setUserName }: LandingPageProps)
         <div className="landing-content">
           <div className="input-section">
             <label htmlFor="userName">Your Name</label>
-            <input
-              ref={userNameInputRef}
-              id="userName"
-              type="text"
-              className="landing-input"
-              placeholder="Enter your name"
-              value={userName}
-              onChange={(e) => setUserName(e.target.value)}
-              onKeyPress={handleKeyPress}
-            />
+              <div className='username-section'>
+                <input
+                  ref={userNameInputRef}
+                  id="userName"
+                  type="text"
+                  className="landing-input"
+                  placeholder="Enter your name"
+                  value={userName}
+                  onChange={(e) => {setUserName(e.target.value); setNameChanged(true)}}
+                  onKeyPress={handleKeyPress}
+                />
+                {nameChanged &&
+                <button
+                  className="action-button primary"
+                  onClick={handleNameUpdate}
+                  disabled={!userName.trim()}
+                >
+                  Save
+                </button>}
+              </div>
           </div>
 
           <div className="divider">

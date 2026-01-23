@@ -1,9 +1,17 @@
-export const formatTime = (date: Date) => {
+export const formatTime = (input: string | Date | undefined) => {
+  if (!input) return "Invalid date";
+
+  const date = input instanceof Date ? input : new Date(input);
+
+  if (isNaN(date.getTime())) {
+    return "Invalid date";
+  }
+
   return new Intl.DateTimeFormat('en-US', {
     hour: 'numeric',
     minute: '2-digit',
     hour12: true,
-  }).format(date)
+  }).format(date);
 }
 
 export const getAvatarColor = (name: string) => {

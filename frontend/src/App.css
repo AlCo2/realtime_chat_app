@@ -361,6 +361,15 @@
   border: 1px solid var(--border-color);
 }
 
+.username-section {
+  display: flex;
+  gap: 8px;
+}
+
+.username-section button {
+  width: 30%;
+}
+
 .input-section {
   margin-bottom: 2rem;
 }

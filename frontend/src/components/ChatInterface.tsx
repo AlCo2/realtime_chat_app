@@ -53,7 +53,7 @@ export default function ChatInterface() {
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
       if (!message.timestamp) {
-        message.timestamp = new Date(0); // fallback
+        message.timestamp = new Date(0);
       } else {
         message.timestamp = new Date(message.timestamp.replace(/(\.\d{3})\d+/, "$1"));
       }

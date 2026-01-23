@@ -31,7 +31,7 @@ function App() {
           path="/chat/:groupId"
           element={
             username ? (
-              <ChatInterface userName={username} />
+              <ChatInterface />
             ) : (
               <Navigate to="/" replace />
             )
