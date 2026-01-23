@@ -102,14 +102,51 @@ func (c *Client) ReadPump() {
 			continue
 		}
 		t := time.Now()
-		chat := models.Message{
+		message := models.Message{
 			Id:             13,
 			Text:           incoming.Content,
 			SenderId:       c.ID,
 			SenderUsername: c.username,
 			Timestamp:      &t,
 		}
-		data, err := json.Marshal(chat)
+
+		folder := "storage/chats"
+
+		filePath := filepath.Join(folder, fmt.Sprintf("%s.json", c.Room.ID))
+
+		_, err = os.Stat(filePath)
+
+		if err != nil {
+			log.Println("Error message:", err)
+			return
+		}
+
+		chat, err := analyseChatFile(filePath)
+
+		if err != nil {
+			log.Println("Error message:", err)
+			return
+		}
+
+		chat.Messages = append(chat.Messages, message)
+		chat_file, err := os.OpenFile(filePath, os.O_WRONLY|os.O_CREATE|os.O_TRUNC, 0644)
+		if err != nil {
+			log.Println("Error message:", err)
+			return
+		}
+
+		defer chat_file.Close()
+
+		encoder := json.NewEncoder(chat_file)
+
+		encoder.SetIndent("", "  ")
+
+		if err := encoder.Encode(chat); err != nil {
+			log.Println("Error message:", err)
+			return
+		}
+
+		data, err := json.Marshal(message)
 		if err != nil {
 			log.Println("Error marshaling message:", err)
 			return
